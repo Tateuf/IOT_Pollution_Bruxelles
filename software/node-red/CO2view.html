@@ -1,0 +1,160 @@
+ <button onclick="window.location.href='http://127.0.0.1:1880/CO2_map'">
+      CO2 MAP
+    </button>
+     <button onclick="window.location.href='http://127.0.0.1:1880/NO2_map'">
+      NO2 MAP
+    </button>
+    
+     <button onclick="window.location.href='http://127.0.0.1:1880/VOC_map'">
+      VOC MAP
+    </button>
+<!DOCTYPE html>
+    <!--The div element for the map -->
+    <div id="map"></div>
+<html>
+  <head>
+    <title>CO2 MAP</title>
+    <script src="https://cdn.anychart.com/releases/8.9.0/js/anychart-base.min.js"></script>
+    <script src="https://cdn.anychart.com/releases/8.9.0/js/anychart-map.min.js"></script>
+    <script src="https://cdn.anychart.com/geodata/latest/custom/world/world.js"></script>
+    <script src="https://cdn.anychart.com/geodata/latest/countries/belgium/belgium.js"></script>
+
+    <script src="https://cdn.anychart.com/releases/8.9.0/js/anychart-data-adapter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.3.15/proj4.js"></script>
+
+    <script src="https://cdn.anychart.com/releases/8.9.0/js/anychart-exports.min.js"></script>
+    <script src="https://cdn.anychart.com/releases/8.9.0/js/anychart-ui.min.js"></script>
+
+    <script src="https://cdn.anychart.com/releases/8.9.0/themes/dark_glamour.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.anychart.com/releases/8.9.0/css/anychart-ui.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.anychart.com/releases/8.9.0/fonts/css/anychart-font.min.css">
+
+    <style type="text/css">      
+      html, body, #container { 
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0; 
+      } 
+    </style>
+  </head>
+  <body>  
+    <div id="container"></div>
+    <script>
+    anychart.onDocumentReady(function() {
+    
+        //anychart.data.loadJsonFile("https://gist.githubusercontent.com/shacheeswadia/47b28a4d061e415555f01f5ce48e9ae3/raw/0f7592a8048872db7b77ccd2df8907e61952a806/shippingDataInverted.json",
+      anychart.data.loadJsonFile("http://127.0.0.1:1880/CO2_data",
+      function (data) {
+      
+      // set the color theme
+      anychart.theme('darkGlamour');
+      
+      // set the map chart
+      var map = anychart.map();
+      
+      // set the belgium geodata
+      map.geoData('anychart.maps.belgium');
+      //map.geoData('anychart.maps.world');
+
+      // set the chart title
+      map.title( 'CO2 pollution');
+
+      // create a dataset from data
+      var pollutionDataSet = anychart.data.set(data).mapAs();
+
+      // helper function to create several series
+      var createSeries = function (name, data, color) {
+        
+        // set the marker series
+        var series = map.marker(data);
+        
+        // configure the series settings
+        series
+          .name(name)
+          .fill(color)
+          .stroke('none')
+          .type('circle')
+          .size(3)
+          .labels(false)
+          .selectionMode('none');
+
+        series
+          .legendItem()
+          .iconType('circle')
+          .iconFill(color);
+      };
+
+      // create 10 series, filtering the data by the capted pollution
+    // create 10 series, filtering the data by the capted pollution
+      createSeries(
+        '0-500',
+        pollutionDataSet.filter('outflows', filterFunction(1, 501)),
+        '#008000'
+      );
+      createSeries(
+        '501-1000',
+        pollutionDataSet.filter('outflows', filterFunction(501, 1001)),
+        '#ADFF2F'
+      );
+      createSeries(
+        '1001-2000',
+        pollutionDataSet.filter('outflows', filterFunction(1001, 2001)),
+        '#CCCC00'
+      );
+      createSeries(
+        '2001-5000',
+        pollutionDataSet.filter('outflows', filterFunction(2001, 5001)),
+        '#FFA500'
+      );
+      createSeries(
+        '5000+',
+        pollutionDataSet.filter('outflows', filterFunction(5001, 0)),
+        '#FF0000'
+      );
+
+
+      // enable and configure the map tooltip
+      map
+        .tooltip() 
+        .useHtml(true)
+        .padding([8, 13, 10, 13])
+        .width(350)
+        .fontSize(12)
+        .fontColor('#e6e6e6')
+        .titleFormat(function () {
+          return this.getData('outflows');
+        });
+
+      // turn on the map legend
+      map.legend(true);
+
+      // add zoom ui controls
+      var zoomController = anychart.ui.zoom();
+      zoomController.render(map);
+
+      // set the container
+      map.container('container');
+
+      // draw the map
+      map.draw();
+
+      });
+    });
+
+    // helper filter function
+    function filterFunction(val1, val2) {
+      if (val2) {
+        return function (fieldVal) {
+          return val1 <= fieldVal && fieldVal < val2;
+        };
+      }
+      return function (fieldVal) {
+        return val1 <= fieldVal;
+      };
+    }
+
+    </script>
+  </body>
+</html>
